@@ -87,7 +87,7 @@ O arquivo `genda-core/docker-compose.yml` sobe **apenas o serviço `genda-core`*
 ### Integração Cloudflare R2
 - **Bucket:** `genda-dev`
 - **Endpoint S3:** `https://ef97a1179c0ed6484714045cb9783f49.r2.cloudflarestorage.com`
-- **SDK:** `@aws-sdk/client-s3` (`PutObjectCommand`) via `POST /api/admin/upload` (campo `file` em `multipart/form-data` + `folder` opcional `establishments` ou `services`).
+- **SDK:** `@aws-sdk/client-s3` (`PutObjectCommand`) via `POST /api/admin/upload` (campo `file` em `multipart/form-data` + `folder` `estabelecimentos` ou `servicos`).
 - **Variáveis necessárias no `.env` do `genda-core`:** `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_PUBLIC_URL` (além de `R2_ENDPOINT`, `R2_BUCKET`, `R2_REGION=auto`).
 
 ### Rotas da API

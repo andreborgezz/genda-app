@@ -308,7 +308,8 @@ export async function uploadAdminImage(req: Request, res: Response, next: NextFu
       });
       return;
     }
-    const folder = typeof req.body?.folder === 'string' ? req.body.folder : 'uploads';
+    const rawFolder = typeof req.body?.folder === 'string' ? req.body.folder.trim() : '';
+    const folder = rawFolder === 'estabelecimentos' ? 'estabelecimentos' : 'servicos';
     const uploaded = await uploadImageToR2({
       buffer: req.file.buffer,
       originalName: req.file.originalname,

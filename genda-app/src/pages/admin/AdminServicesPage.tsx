@@ -76,7 +76,7 @@ export function AdminServicesPage() {
   async function handleImageUpload(file: File) {
     setUploading(true);
     try {
-      const res = await adminApi.uploadImage(file, 'services');
+      const res = await adminApi.uploadImage(file, 'servicos');
       setForm((prev) => ({ ...prev, image_url: res.url }));
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Erro ao enviar imagem.');

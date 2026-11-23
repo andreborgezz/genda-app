@@ -128,7 +128,7 @@ export const adminApi = {
       }
     ),
 
-  uploadImage: (file: File, folder: 'establishments' | 'services' = 'uploads' as 'services') => {
+  uploadImage: (file: File, folder: 'estabelecimentos' | 'servicos' = 'servicos') => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('folder', folder);

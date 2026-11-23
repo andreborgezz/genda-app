@@ -28,7 +28,7 @@ export function AdminSettingsPage() {
   async function handleUpload(field: 'logo_url' | 'banner_url', file: File) {
     setUploadingField(field);
     try {
-      const res = await adminApi.uploadImage(file, 'establishments');
+      const res = await adminApi.uploadImage(file, 'estabelecimentos');
       setForm((prev) => (prev ? { ...prev, [field]: res.url } : prev));
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Erro no upload.');
