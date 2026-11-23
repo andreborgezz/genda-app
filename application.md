@@ -25,8 +25,11 @@ genda-app/ (raiz do repositório)
 │   ├── .env / .env.example
 │   └── src/
 │       ├── config/         # env.ts, db.ts (pg.Pool), r2.ts (Cloudflare R2 S3Client)
-│       ├── routes/         # public.routes.ts, admin.routes.ts
-│       ├── services/       # availability.service.ts (cálculo de slots disponíveis)
+│       ├── types/          # genda.types.ts (interfaces das tabelas e DTOs)
+│       ├── models/         # SQL puro via pg.Pool (establishment, service, workingHours, scheduleBlock, appointment)
+│       ├── services/       # availability.service.ts, booking.service.ts (regras de negócio e lock transacional)
+│       ├── controllers/    # public.controller.ts, admin.controller.ts (handlers HTTP + validação Zod)
+│       ├── routes/         # public.routes.ts, admin.routes.ts (mapeamento de rotas)
 │       ├── utils/          # time.ts (conversões de horário e sobreposição)
 │       └── server.ts       # Bootstrap Express, CORS, /health
 ├── genda-app/              # Frontend React + TypeScript + Vite + Tailwind CSS v4
