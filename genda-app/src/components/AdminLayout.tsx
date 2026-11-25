@@ -1,6 +1,17 @@
-import { Building2, Calendar, Clock, ExternalLink, Scissors, Sparkles } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import {
+  Building2,
+  Calendar,
+  ChevronsUpDown,
+  Clock,
+  CreditCard,
+  ExternalLink,
+  LogOut,
+  Mail,
+  Scissors,
+  Sparkles,
+} from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import gendaLogo from '../assets/genda-logo-horizontal-dots.svg';
 import { adminApi } from '../services/api';
 import type { Establishment } from '../types/genda';
@@ -43,7 +54,10 @@ const NAV_GROUPS = [
 const MOBILE_NAV_ITEMS = NAV_GROUPS.flatMap((g) => g.items);
 
 export function AdminLayout() {
+  const navigate = useNavigate();
   const [establishment, setEstablishment] = useState<Establishment | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     adminApi
@@ -52,7 +66,24 @@ export function AdminLayout() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+    function handleOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [menuOpen]);
+
   const publicPath = establishment?.slug ? `/${establishment.slug}` : '/';
+
+  function handleLogout() {
+    setMenuOpen(false);
+    localStorage.removeItem('genda_token');
+    navigate('/');
+  }
 
   return (
     <div className="min-h-screen bg-[#F8F9FF] flex flex-col lg:flex-row">
@@ -95,31 +126,90 @@ export function AdminLayout() {
           </nav>
         </div>
 
-        {/* Rodapé da Sidebar: Perfil do Estabelecimento */}
-        <Link
-          to="/painel/estabelecimento"
-          className="flex items-center gap-3 p-2.5 rounded-2xl hover:bg-[#F4F8FF] border border-transparent hover:border-[#DBEAFE] transition-colors"
-        >
-          <div className="w-10 h-10 rounded-full bg-[#F4F8FF] border border-[#DBEAFE] overflow-hidden flex items-center justify-center shrink-0">
-            {establishment?.logo_url ? (
-              <img
-                src={establishment.logo_url}
-                alt={establishment.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <Sparkles className="w-4 h-4 text-[#1D4ED8]" />
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-[#1E3A8A] truncate">
-              {establishment?.name || 'Meu Estúdio'}
-            </p>
-            <p className="text-xs text-[#5A6B82] truncate">
-              {establishment?.slug ? `genda.me/${establishment.slug}` : 'Configurar perfil'}
-            </p>
-          </div>
-        </Link>
+        {/* Rodapé da Sidebar com Drop-up de Conta / Plano / Logout */}
+        <div ref={menuRef} className="relative">
+          {menuOpen && (
+            <div
+              className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-2xl border border-[#DBEAFE] p-3 space-y-2.5 z-50"
+              style={{
+                boxShadow:
+                  '0px 10px 25px -5px rgba(30, 58, 138, 0.14), 0px 4px 10px -2px rgba(30, 58, 138, 0.05)',
+              }}
+            >
+              {/* E-mail e Plano */}
+              <div className="p-2.5 rounded-xl bg-[#F4F8FF] border border-[#DBEAFE] space-y-2">
+                <div className="flex items-center gap-2 text-xs text-[#5A6B82]">
+                  <Mail className="w-3.5 h-3.5 text-[#1D4ED8] shrink-0" />
+                  <span className="truncate font-medium text-[#1E3A8A]">
+                    contato@{establishment?.slug || 'studio'}.com
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#DBEAFE]">
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#1E3A8A]">
+                    <CreditCard className="w-3.5 h-3.5 text-[#1D4ED8]" />
+                    Plano Pro
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-[#10B981]/15 text-[#047857] text-[10px] font-bold">
+                    Ativo
+                  </span>
+                </div>
+                <p className="text-[10px] text-[#5A6B82]">
+                  Assinatura mensal • Renova em 24/12/2026
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <Link
+                  to="/painel/estabelecimento"
+                  onClick={() => setMenuOpen(false)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#1E3A8A] hover:bg-[#F4F8FF] transition-colors"
+                >
+                  <Building2 className="w-3.5 h-3.5 text-[#1D4ED8]" />
+                  Dados do estabelecimento
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  Sair da conta
+                </button>
+              </div>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setMenuOpen((o) => !o)}
+            className={`w-full flex items-center gap-3 p-2.5 rounded-2xl border transition-colors text-left cursor-pointer ${
+              menuOpen
+                ? 'bg-[#F4F8FF] border-[#DBEAFE]'
+                : 'border-transparent hover:bg-[#F4F8FF] hover:border-[#DBEAFE]'
+            }`}
+          >
+            <div className="w-10 h-10 rounded-full bg-[#F4F8FF] border border-[#DBEAFE] overflow-hidden flex items-center justify-center shrink-0">
+              {establishment?.logo_url ? (
+                <img
+                  src={establishment.logo_url}
+                  alt={establishment.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Sparkles className="w-4 h-4 text-[#1D4ED8]" />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-[#1E3A8A] truncate">
+                {establishment?.name || 'Meu Estúdio'}
+              </p>
+              <p className="text-xs text-[#5A6B82] truncate">
+                {establishment?.slug ? `genda.me/${establishment.slug}` : 'Configurar perfil'}
+              </p>
+            </div>
+            <ChevronsUpDown className="w-4 h-4 text-[#5A6B82] shrink-0" />
+          </button>
+        </div>
       </aside>
 
       {/* Topbar Mobile */}
