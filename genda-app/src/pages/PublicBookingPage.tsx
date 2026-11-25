@@ -10,7 +10,7 @@ import {
   User,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import gendaLogo from '../assets/genda-logo-horizontal-dots.svg';
 import { DEFAULT_SLUG, publicApi } from '../services/api';
 import type { Establishment, ServiceItem, SlotOption, WorkingHour } from '../types/genda';
@@ -178,6 +178,19 @@ export function PublicBookingPage() {
     }
   }
 
+  function handleSelectService(service: ServiceItem) {
+    if (selectedService?.id === service.id) return;
+    setSelectedService(service);
+    setSelectedTime(null);
+    setSubmitError(null);
+  }
+
+  function handleSelectDate(iso: string) {
+    setSelectedDate(iso);
+    setSelectedTime(null);
+    setSubmitError(null);
+  }
+
   function resetBooking() {
     setConfirmed(null);
     setSelectedService(null);
@@ -204,17 +217,15 @@ export function PublicBookingPage() {
         <img src={gendaLogo} alt="Genda" className="h-8 mb-6" />
         <div className="genda-card max-w-md w-full p-6">
           <h1 className="text-lg font-bold text-[#1E3A8A] mb-2">Agenda indisponível</h1>
-          <p className="text-sm text-[#5A6B82] mb-4">{error || 'Estabelecimento não encontrado.'}</p>
-          <Link
-            to="/painel"
-            className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-[#1D4ED8] text-white text-sm font-semibold"
-          >
-            Ir para o Painel
-          </Link>
+          <p className="text-sm text-[#5A6B82]">
+            {error || 'Estabelecimento não encontrado.'}
+          </p>
         </div>
       </div>
     );
   }
+
+  const brandColor = establishment.primary_color || '#1D4ED8';
 
   if (confirmed) {
     const cleanPhone = confirmed.establishment_whatsapp.replace(/\D/g, '');
@@ -287,12 +298,7 @@ export function PublicBookingPage() {
       <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-[#DBEAFE]">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <img src={gendaLogo} alt="Genda" className="h-6" />
-          <Link
-            to="/painel"
-            className="text-xs font-semibold text-[#1D4ED8] hover:text-[#1E3A8A] bg-[#F4F8FF] px-3 py-1.5 rounded-full border border-[#DBEAFE] transition-colors"
-          >
-            Área do Profissional
-          </Link>
+          <span className="text-xs font-semibold text-[#5A6B82]">Agendamento Online</span>
         </div>
       </header>
 
@@ -308,7 +314,12 @@ export function PublicBookingPage() {
               />
             </div>
           ) : (
-            <div className="h-24 sm:h-32 w-full bg-gradient-to-r from-[#1E3A8A] via-[#1D4ED8] to-[#3B82F6]" />
+            <div
+              className="h-24 sm:h-32 w-full"
+              style={{
+                background: `linear-gradient(120deg, #1E3A8A 0%, ${brandColor} 65%, #60A5FA 100%)`,
+              }}
+            />
           )}
 
           <div className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
@@ -320,7 +331,7 @@ export function PublicBookingPage() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <Sparkles className="w-8 h-8 text-[#1D4ED8]" />
+                <Sparkles className="w-8 h-8" style={{ color: brandColor }} />
               )}
             </div>
             <div className="flex-1 min-w-0">
@@ -355,7 +366,13 @@ export function PublicBookingPage() {
 
         {/* Indicador Progressivo de 3 Passos */}
         <div className="flex items-center gap-2 mb-6 px-1">
-          <StepPill number={1} label="Serviço" active={!step2Unlocked} completed={step2Unlocked} />
+          <StepPill
+            number={1}
+            label="Serviço"
+            active={!step2Unlocked}
+            completed={step2Unlocked}
+            brandColor={brandColor}
+          />
           <div className="flex-1 h-0.5 bg-[#DBEAFE]" />
           <StepPill
             number={2}
@@ -363,6 +380,7 @@ export function PublicBookingPage() {
             active={step2Unlocked && !step3Unlocked}
             completed={step3Unlocked}
             locked={!step2Unlocked}
+            brandColor={brandColor}
           />
           <div className="flex-1 h-0.5 bg-[#DBEAFE]" />
           <StepPill
@@ -371,6 +389,7 @@ export function PublicBookingPage() {
             active={step3Unlocked}
             completed={false}
             locked={!step3Unlocked}
+            brandColor={brandColor}
           />
         </div>
 
@@ -381,7 +400,10 @@ export function PublicBookingPage() {
             <section className="genda-card p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2.5">
-                  <span className="w-7 h-7 rounded-full bg-[#1D4ED8] text-white text-xs font-bold flex items-center justify-center">
+                  <span
+                    className="w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center"
+                    style={{ backgroundColor: brandColor }}
+                  >
                     1
                   </span>
                   <h2 className="text-base sm:text-lg font-bold text-[#1E3A8A]">
@@ -402,9 +424,12 @@ export function PublicBookingPage() {
                       key={cat}
                       type="button"
                       onClick={() => setSelectedCategory(cat)}
+                      style={
+                        selectedCategory === cat ? { backgroundColor: brandColor } : undefined
+                      }
                       className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
                         selectedCategory === cat
-                          ? 'bg-[#1D4ED8] text-white'
+                          ? 'text-white'
                           : 'bg-[#F4F8FF] text-[#5A6B82] hover:text-[#1E3A8A] border border-[#DBEAFE]'
                       }`}
                     >
@@ -421,10 +446,11 @@ export function PublicBookingPage() {
                     <button
                       key={service.id}
                       type="button"
-                      onClick={() => setSelectedService(service)}
+                      onClick={() => handleSelectService(service)}
+                      style={isSelected ? { borderColor: brandColor } : undefined}
                       className={`w-full text-left p-4 rounded-xl transition-all flex items-center gap-4 cursor-pointer ${
                         isSelected
-                          ? 'border-2 border-[#1D4ED8] bg-[#F4F8FF]'
+                          ? 'border-2 bg-[#F4F8FF]'
                           : 'border border-[#DBEAFE] bg-white hover:border-[#93C5FD]'
                       }`}
                     >
@@ -477,8 +503,9 @@ export function PublicBookingPage() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2.5">
                   <span
+                    style={step2Unlocked ? { backgroundColor: brandColor } : undefined}
                     className={`w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center ${
-                      step2Unlocked ? 'bg-[#1D4ED8] text-white' : 'bg-[#DBEAFE] text-[#5A6B82]'
+                      step2Unlocked ? 'text-white' : 'bg-[#DBEAFE] text-[#5A6B82]'
                     }`}
                   >
                     2
@@ -503,13 +530,18 @@ export function PublicBookingPage() {
                       key={d.iso}
                       type="button"
                       disabled={!d.isOpen}
-                      onClick={() => setSelectedDate(d.iso)}
+                      onClick={() => handleSelectDate(d.iso)}
+                      style={
+                        d.isOpen && isSelected
+                          ? { backgroundColor: brandColor, borderColor: brandColor }
+                          : undefined
+                      }
                       className={`w-[62px] h-[78px] rounded-xl shrink-0 flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
                         !d.isOpen
                           ? 'bg-[#F4F8FF] border border-dashed border-[#DBEAFE] text-[#BFDBFE] cursor-not-allowed'
                           : isSelected
-                          ? 'bg-[#1D4ED8] text-white border border-[#1D4ED8] shadow-sm'
-                          : 'bg-white border border-[#DBEAFE] text-[#1E3A8A] hover:border-[#1D4ED8]'
+                          ? 'text-white border shadow-sm'
+                          : 'bg-white border border-[#DBEAFE] text-[#1E3A8A] hover:border-[#93C5FD]'
                       }`}
                     >
                       <span
@@ -558,13 +590,21 @@ export function PublicBookingPage() {
                             key={slot.time}
                             type="button"
                             disabled={!slot.available}
-                            onClick={() => setSelectedTime(slot.time)}
+                            onClick={() => {
+                              setSelectedTime(slot.time);
+                              setSubmitError(null);
+                            }}
+                            style={
+                              slot.available && isSelected
+                                ? { backgroundColor: brandColor, borderColor: brandColor }
+                                : undefined
+                            }
                             className={`h-11 rounded-lg text-sm font-semibold transition-all ${
                               !slot.available
                                 ? 'bg-[#F4F8FF] border border-dashed border-[#DBEAFE] text-[#BFDBFE] line-through cursor-not-allowed'
                                 : isSelected
-                                ? 'bg-[#1D4ED8] text-white border border-[#1D4ED8] cursor-pointer'
-                                : 'bg-white border border-[#DBEAFE] text-[#1E3A8A] hover:border-[#1D4ED8] hover:text-[#1D4ED8] cursor-pointer'
+                                ? 'text-white border cursor-pointer'
+                                : 'bg-white border border-[#DBEAFE] text-[#1E3A8A] hover:border-[#93C5FD] cursor-pointer'
                             }`}
                           >
                             {slot.time}
@@ -589,8 +629,9 @@ export function PublicBookingPage() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2.5">
                   <span
+                    style={step3Unlocked ? { backgroundColor: brandColor } : undefined}
                     className={`w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center ${
-                      step3Unlocked ? 'bg-[#1D4ED8] text-white' : 'bg-[#DBEAFE] text-[#5A6B82]'
+                      step3Unlocked ? 'text-white' : 'bg-[#DBEAFE] text-[#5A6B82]'
                     }`}
                   >
                     3
@@ -690,7 +731,7 @@ export function PublicBookingPage() {
                 {selectedService && (
                   <div className="flex items-center justify-between pt-2 border-t border-[#DBEAFE]">
                     <span className="text-[#5A6B82]">Total</span>
-                    <span className="text-xl font-bold text-[#1D4ED8]">
+                    <span className="text-xl font-bold" style={{ color: brandColor }}>
                       {formatCurrency(selectedService.price_cents)}
                     </span>
                   </div>
@@ -701,7 +742,8 @@ export function PublicBookingPage() {
                 type="button"
                 disabled={!canConfirm}
                 onClick={handleConfirm}
-                className="w-full h-13 rounded-full bg-[#1D4ED8] hover:bg-[#1E40AF] disabled:bg-[#BFDBFE] disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors cursor-pointer"
+                style={canConfirm ? { backgroundColor: brandColor } : undefined}
+                className="w-full h-13 rounded-full bg-[#BFDBFE] disabled:cursor-not-allowed text-white font-semibold text-sm transition-opacity hover:opacity-95 cursor-pointer"
               >
                 {submitting ? 'Confirmando...' : 'Confirmar Agendamento'}
               </button>
@@ -725,7 +767,8 @@ export function PublicBookingPage() {
             type="button"
             disabled={!canConfirm}
             onClick={handleConfirm}
-            className="h-12 px-6 rounded-full bg-[#1D4ED8] hover:bg-[#1E40AF] disabled:bg-[#BFDBFE] text-white font-semibold text-sm shrink-0 transition-colors cursor-pointer"
+            style={canConfirm ? { backgroundColor: brandColor } : undefined}
+            className="h-12 px-6 rounded-full bg-[#BFDBFE] text-white font-semibold text-sm shrink-0 transition-opacity hover:opacity-95 cursor-pointer"
           >
             {submitting ? 'Enviando...' : 'Confirmar'}
           </button>
@@ -741,21 +784,24 @@ function StepPill({
   active,
   completed,
   locked,
+  brandColor,
 }: {
   number: number;
   label: string;
   active?: boolean;
   completed?: boolean;
   locked?: boolean;
+  brandColor: string;
 }) {
   return (
     <div className="flex items-center gap-1.5 shrink-0">
       <span
+        style={active && !completed ? { backgroundColor: brandColor } : undefined}
         className={`w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center ${
           completed
             ? 'bg-[#10B981] text-white'
             : active
-            ? 'bg-[#1D4ED8] text-white'
+            ? 'text-white'
             : 'bg-[#DBEAFE] text-[#5A6B82]'
         }`}
       >
