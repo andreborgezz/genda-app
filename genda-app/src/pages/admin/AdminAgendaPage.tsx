@@ -15,7 +15,12 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { GendaDatePicker } from '../../components/GendaDatePicker';
 import { adminApi } from '../../services/api';
-import type { Appointment, AppointmentStatus, MonthDaySummary } from '../../types/genda';
+import type {
+  Appointment,
+  AppointmentStatus,
+  MonthDaySummary,
+  WorkingHour,
+} from '../../types/genda';
 import { DAY_NAMES_SHORT, formatCurrency, formatDuration, toIsoDate } from '../../utils/format';
 
 const STATUS_META: Record<
@@ -38,10 +43,12 @@ export function AdminAgendaPage() {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  // Estado do calendário mensal
+  // Estado do calendário mensal e resumo dos dias
   const [calendarYear, setCalendarYear] = useState(() => new Date().getFullYear());
   const [calendarMonth, setCalendarMonth] = useState(() => new Date().getMonth());
   const [monthDays, setMonthDays] = useState<Record<string, MonthDaySummary>>({});
+  const [stripDaysMeta, setStripDaysMeta] = useState<Record<string, MonthDaySummary>>({});
+  const [workingHours, setWorkingHours] = useState<WorkingHour[]>([]);
   const [loadingMonth, setLoadingMonth] = useState(false);
 
   const monthKey = useMemo(
@@ -60,15 +67,38 @@ export function AdminAgendaPage() {
 
   const days = useMemo(() => {
     const today = new Date();
-    return Array.from({ length: 14 }).map((_, idx) => {
+    return Array.from({ length: 15 }).map((_, idx) => {
       const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + idx);
       return {
         iso: toIsoDate(d),
+        dayOfWeek: d.getDay(),
         dayShort: idx === 0 ? 'Hoje' : DAY_NAMES_SHORT[d.getDay()],
         dayNum: d.getDate(),
       };
     });
   }, []);
+
+  const closedWeekdays = useMemo(() => {
+    return new Set(workingHours.filter((w) => !w.is_open).map((w) => w.day_of_week));
+  }, [workingHours]);
+
+  const loadStripMeta = useCallback(async () => {
+    const monthKeys = Array.from(new Set(days.map((d) => d.iso.slice(0, 7))));
+    try {
+      const [whRes, ...monthResponses] = await Promise.all([
+        adminApi.getWorkingHours(),
+        ...monthKeys.map((mk) => adminApi.getMonthSummary(mk)),
+      ]);
+      setWorkingHours(whRes.workingHours);
+      const merged: Record<string, MonthDaySummary> = {};
+      for (const res of monthResponses) {
+        Object.assign(merged, res.days);
+      }
+      setStripDaysMeta(merged);
+    } catch {
+      // Silencioso para não bloquear a agenda do dia
+    }
+  }, [days]);
 
   const loadAppointments = useCallback(async () => {
     setLoading(true);
@@ -95,6 +125,10 @@ export function AdminAgendaPage() {
   }, [loadAppointments]);
 
   useEffect(() => {
+    loadStripMeta();
+  }, [loadStripMeta]);
+
+  useEffect(() => {
     if (viewMode === 'month') {
       loadMonthSummary();
     }
@@ -107,6 +141,7 @@ export function AdminAgendaPage() {
       setAppointments((prev) =>
         prev.map((a) => (a.id === id ? { ...a, status } : a))
       );
+      loadStripMeta();
       if (viewMode === 'month') {
         loadMonthSummary();
       }
@@ -231,26 +266,58 @@ export function AdminAgendaPage() {
         </div>
       </div>
 
-      {/* Visão Diária: carrossel rápido de 14 dias */}
+      {/* Visão Diária: carrossel rápido de 15 dias */}
       {viewMode === 'day' ? (
         <div className="flex gap-2 overflow-x-auto pb-1">
           {days.map((d) => {
             const active = d.iso === selectedDate;
+            const meta = stripDaysMeta[d.iso];
+            const count = meta?.total_count || 0;
+            const isClosed = closedWeekdays.has(d.dayOfWeek) || Boolean(meta?.block_all_day);
+
             return (
               <button
                 key={d.iso}
                 type="button"
                 onClick={() => setSelectedDate(d.iso)}
-                className={`w-14 h-16 rounded-xl shrink-0 flex flex-col items-center justify-center transition-colors cursor-pointer ${
+                title={
+                  isClosed
+                    ? 'Dia fechado / sem atendimento'
+                    : count > 0
+                    ? `${count} agendamento(s)`
+                    : undefined
+                }
+                className={`relative w-14 h-[70px] rounded-xl shrink-0 lg:w-auto lg:flex-1 flex flex-col items-center justify-center transition-all cursor-pointer ${
                   active
-                    ? 'bg-[#1D4ED8] text-white'
+                    ? 'bg-[#1D4ED8] text-white shadow-sm'
+                    : isClosed
+                    ? 'bg-[#F4F8FF]/80 border border-dashed border-[#DBEAFE] text-[#5A6B82]/55 opacity-55 hover:opacity-85'
                     : 'bg-white border border-[#DBEAFE] text-[#1E3A8A] hover:border-[#1D4ED8]'
                 }`}
               >
-                <span className={`text-[11px] ${active ? 'text-[#DBEAFE]' : 'text-[#5A6B82]'}`}>
+                {count > 0 && (
+                  <span
+                    className={`absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center leading-none ${
+                      active
+                        ? 'bg-white text-[#1D4ED8]'
+                        : 'bg-[#1D4ED8] text-white'
+                    }`}
+                  >
+                    {count}
+                  </span>
+                )}
+                <span
+                  className={`text-[11px] ${
+                    active
+                      ? 'text-[#DBEAFE]'
+                      : isClosed
+                      ? 'text-[#5A6B82]/60'
+                      : 'text-[#5A6B82]'
+                  }`}
+                >
                   {d.dayShort}
                 </span>
-                <span className="text-base font-bold">{d.dayNum}</span>
+                <span className="text-base font-bold leading-tight">{d.dayNum}</span>
               </button>
             );
           })}

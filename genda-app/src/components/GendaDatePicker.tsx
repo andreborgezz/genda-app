@@ -8,9 +8,15 @@ interface GendaDatePickerProps {
   value: string;
   onChange: (isoDate: string) => void;
   className?: string;
+  placement?: 'bottom' | 'top';
 }
 
-export function GendaDatePicker({ value, onChange, className = '' }: GendaDatePickerProps) {
+export function GendaDatePicker({
+  value,
+  onChange,
+  className = '',
+  placement = 'bottom',
+}: GendaDatePickerProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -102,7 +108,9 @@ export function GendaDatePicker({ value, onChange, className = '' }: GendaDatePi
 
       {open && (
         <div
-          className="absolute left-0 sm:left-auto sm:right-0 mt-2 z-50 w-72 bg-white rounded-2xl border border-[#DBEAFE] p-4"
+          className={`absolute left-0 sm:left-auto sm:right-0 z-50 w-72 bg-white rounded-2xl border border-[#DBEAFE] p-4 ${
+            placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'
+          }`}
           style={{
             boxShadow:
               '0px 10px 25px -5px rgba(30, 58, 138, 0.12), 0px 4px 10px -2px rgba(30, 58, 138, 0.05)',

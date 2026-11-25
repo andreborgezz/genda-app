@@ -18,7 +18,8 @@ export function App() {
           <Route index element={<AdminAgendaPage />} />
           <Route path="servicos" element={<AdminServicesPage />} />
           <Route path="horarios" element={<AdminHoursPage />} />
-          <Route path="configuracoes" element={<AdminSettingsPage />} />
+          <Route path="estabelecimento" element={<AdminSettingsPage />} />
+          <Route path="configuracoes" element={<Navigate to="/painel/estabelecimento" replace />} />
         </Route>
 
         {/* Slug personalizado de estabelecimento (ex: /studio-aura) */}

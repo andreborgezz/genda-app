@@ -184,7 +184,7 @@ export function AdminHoursPage() {
         <form onSubmit={handleCreateBlock} className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
           <div>
             <label className="block text-xs font-semibold text-[#5A6B82] mb-1">Data</label>
-            <GendaDatePicker value={blockDate} onChange={setBlockDate} />
+            <GendaDatePicker value={blockDate} onChange={setBlockDate} placement="top" />
           </div>
 
           <div className="flex items-center gap-2 h-10">
