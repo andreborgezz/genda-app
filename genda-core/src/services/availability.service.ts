@@ -5,6 +5,7 @@ import { getWorkingHourByDay } from '../models/workingHours.model';
 import type { SlotOption } from '../types/genda.types';
 import {
   getDayOfWeekFromDate,
+  getNowInTimezone,
   intervalsOverlap,
   minutesToTime,
   timeToMinutes,
@@ -15,8 +16,16 @@ export async function getAvailableSlotsForDate(params: {
   date: string;
   durationMinutes: number;
   slotIntervalMinutes: number;
+  minAdvanceMinutes?: number;
   client?: PoolClient;
 }): Promise<SlotOption[]> {
+  const now = getNowInTimezone();
+  if (params.date < now.dateIso) {
+    return [];
+  }
+  const isToday = params.date === now.dateIso;
+  const minAllowedStart = now.minutesOfDay + (params.minAdvanceMinutes ?? 0);
+
   const dayOfWeek = getDayOfWeekFromDate(params.date);
   const wh = await getWorkingHourByDay(params.establishmentId, dayOfWeek, params.client);
 
@@ -59,6 +68,9 @@ export async function getAvailableSlotsForDate(params: {
   const step = Math.max(15, params.slotIntervalMinutes);
 
   for (let t = openMin; t + params.durationMinutes <= closeMin; t += step) {
+    if (isToday && t < minAllowedStart) {
+      continue;
+    }
     const end = t + params.durationMinutes;
     const hasConflict = busyIntervals.some(([bStart, bEnd]) =>
       intervalsOverlap(t, end, bStart, bEnd)

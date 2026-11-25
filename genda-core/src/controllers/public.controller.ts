@@ -67,6 +67,7 @@ export async function getPublicSlots(req: Request, res: Response, next: NextFunc
       date,
       durationMinutes: service.duration_minutes,
       slotIntervalMinutes: establishment.slot_interval_minutes,
+      minAdvanceMinutes: establishment.min_advance_minutes,
     });
 
     res.json({ date, slots });

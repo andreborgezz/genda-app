@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
 import { isR2Configured, uploadImageToR2 } from '../config/r2';
+import { timeToMinutes } from '../utils/time';
 import {
   getAppointmentsByEstablishment,
   updateAppointmentStatusById,
@@ -206,6 +207,31 @@ export async function updateAdminWorkingHours(req: Request, res: Response, next:
       break_start: wh.break_start ?? null,
       break_end: wh.break_end ?? null,
     }));
+
+    for (const wh of normalized) {
+      if (!wh.is_open) continue;
+      const openMin = timeToMinutes(wh.open_time);
+      const closeMin = timeToMinutes(wh.close_time);
+      if (openMin >= closeMin) {
+        res.status(400).json({ error: 'Horário de abertura deve ser menor que o de fechamento.' });
+        return;
+      }
+      if ((wh.break_start && !wh.break_end) || (!wh.break_start && wh.break_end)) {
+        res.status(400).json({ error: 'Informe início e fim do intervalo.' });
+        return;
+      }
+      if (wh.break_start && wh.break_end) {
+        const bStart = timeToMinutes(wh.break_start);
+        const bEnd = timeToMinutes(wh.break_end);
+        if (bStart >= bEnd || bStart < openMin || bEnd > closeMin) {
+          res.status(400).json({
+            error: 'O intervalo deve estar dentro do horário de funcionamento e com início menor que o fim.',
+          });
+          return;
+        }
+      }
+    }
+
     const workingHours = await upsertWorkingHours(estId, normalized);
     res.json({ workingHours });
   } catch (err) {
@@ -238,6 +264,16 @@ export async function createAdminBlock(req: Request, res: Response, next: NextFu
     if (!parsed.success) {
       res.status(400).json({ error: 'Dados do bloqueio inválidos.' });
       return;
+    }
+    if (!parsed.data.all_day) {
+      if (!parsed.data.start_time || !parsed.data.end_time) {
+        res.status(400).json({ error: 'Informe horário inicial e final para bloqueio parcial.' });
+        return;
+      }
+      if (timeToMinutes(parsed.data.start_time) >= timeToMinutes(parsed.data.end_time)) {
+        res.status(400).json({ error: 'Horário inicial do bloqueio deve ser menor que o final.' });
+        return;
+      }
     }
     const block = await createScheduleBlock(estId, parsed.data);
     res.status(201).json({ block });

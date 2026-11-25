@@ -42,6 +42,7 @@ export async function createPublicAppointment(params: {
       date: params.date,
       durationMinutes: service.duration_minutes,
       slotIntervalMinutes: est.slot_interval_minutes,
+      minAdvanceMinutes: est.min_advance_minutes,
       client,
     });
 

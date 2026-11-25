@@ -124,6 +124,7 @@ export function PublicBookingPage() {
 
   // Busca horários disponíveis quando serviço + data estão definidos
   useEffect(() => {
+    setSubmitError(null);
     if (!selectedService || !selectedDate) {
       setSlots([]);
       return;
