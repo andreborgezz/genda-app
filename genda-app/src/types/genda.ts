@@ -68,3 +68,13 @@ export interface Appointment {
   status: AppointmentStatus;
   created_at: string;
 }
+
+export interface MonthDaySummary {
+  total_count: number;
+  confirmed_count: number;
+  completed_count: number;
+  revenue_cents: number;
+  has_block: boolean;
+  block_all_day: boolean;
+  block_reason: string;
+}

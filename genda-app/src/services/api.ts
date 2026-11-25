@@ -2,6 +2,7 @@ import type {
   Appointment,
   AppointmentStatus,
   Establishment,
+  MonthDaySummary,
   ScheduleBlock,
   ServiceItem,
   SlotOption,
@@ -114,9 +115,20 @@ export const adminApi = {
       method: 'DELETE',
     }),
 
-  getAppointments: (date?: string) =>
-    request<{ appointments: Appointment[] }>(
-      `/api/admin/appointments${date ? `?date=${encodeURIComponent(date)}` : ''}`
+  getAppointments: (date?: string, startDate?: string, endDate?: string) => {
+    const params = new URLSearchParams();
+    if (date) params.set('date', date);
+    if (startDate) params.set('startDate', startDate);
+    if (endDate) params.set('endDate', endDate);
+    const qs = params.toString();
+    return request<{ appointments: Appointment[] }>(
+      `/api/admin/appointments${qs ? `?${qs}` : ''}`
+    );
+  },
+
+  getMonthSummary: (month: string) =>
+    request<{ month: string; days: Record<string, MonthDaySummary> }>(
+      `/api/admin/appointments/month-summary?month=${encodeURIComponent(month)}`
     ),
 
   updateAppointmentStatus: (id: string, status: AppointmentStatus) =>

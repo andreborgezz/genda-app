@@ -8,6 +8,7 @@ import {
   getAdminAppointments,
   getAdminBlocks,
   getAdminEstablishment,
+  getAdminMonthSummary,
   getAdminServices,
   getAdminWorkingHours,
   updateAdminAppointmentStatus,
@@ -40,6 +41,7 @@ adminRouter.post('/blocks', createAdminBlock);
 adminRouter.delete('/blocks/:id', deleteAdminBlock);
 
 adminRouter.get('/appointments', getAdminAppointments);
+adminRouter.get('/appointments/month-summary', getAdminMonthSummary);
 adminRouter.patch('/appointments/:id/status', updateAdminAppointmentStatus);
 
 adminRouter.post('/upload', upload.single('file'), uploadAdminImage);

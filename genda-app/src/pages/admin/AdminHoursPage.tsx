@@ -1,5 +1,6 @@
 import { CalendarOff, Plus, Save, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { GendaDatePicker } from '../../components/GendaDatePicker';
 import { adminApi } from '../../services/api';
 import type { ScheduleBlock, WorkingHour } from '../../types/genda';
 import { DAY_NAMES_FULL, toIsoDate } from '../../utils/format';
@@ -183,13 +184,7 @@ export function AdminHoursPage() {
         <form onSubmit={handleCreateBlock} className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
           <div>
             <label className="block text-xs font-semibold text-[#5A6B82] mb-1">Data</label>
-            <input
-              type="date"
-              required
-              value={blockDate}
-              onChange={(e) => setBlockDate(e.target.value)}
-              className="w-full h-10 px-3 rounded-xl border border-[#DBEAFE] bg-[#F4F8FF] text-sm text-[#1E3A8A]"
-            />
+            <GendaDatePicker value={blockDate} onChange={setBlockDate} />
           </div>
 
           <div className="flex items-center gap-2 h-10">

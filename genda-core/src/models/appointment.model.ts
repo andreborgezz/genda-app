@@ -21,7 +21,9 @@ export async function getActiveAppointmentIntervals(
 
 export async function getAppointmentsByEstablishment(
   establishmentId: string,
-  date: string | null
+  date: string | null,
+  startDate?: string | null,
+  endDate?: string | null
 ): Promise<AppointmentRow[]> {
   const result = await query<AppointmentRow>(
     `SELECT a.id, a.service_id, s.name AS service_name, s.category AS service_category,
@@ -32,8 +34,46 @@ export async function getAppointmentsByEstablishment(
      JOIN public.services s ON s.id = a.service_id
      WHERE a.establishment_id = $1
        AND ($2::date IS NULL OR a.appointment_date = $2::date)
+       AND ($3::date IS NULL OR a.appointment_date >= $3::date)
+       AND ($4::date IS NULL OR a.appointment_date <= $4::date)
      ORDER BY a.appointment_date ASC, a.start_time ASC`,
-    [establishmentId, date]
+    [establishmentId, date, startDate ?? null, endDate ?? null]
+  );
+  return result.rows;
+}
+
+export async function getMonthlyAppointmentSummary(
+  establishmentId: string,
+  startDate: string,
+  endDate: string
+): Promise<
+  Array<{
+    appointment_date: string;
+    total_count: number;
+    confirmed_count: number;
+    completed_count: number;
+    revenue_cents: number;
+  }>
+> {
+  const result = await query<{
+    appointment_date: string;
+    total_count: number;
+    confirmed_count: number;
+    completed_count: number;
+    revenue_cents: number;
+  }>(
+    `SELECT
+       appointment_date::text AS appointment_date,
+       COUNT(*) FILTER (WHERE status <> 'cancelled')::int AS total_count,
+       COUNT(*) FILTER (WHERE status = 'confirmed')::int AS confirmed_count,
+       COUNT(*) FILTER (WHERE status = 'completed')::int AS completed_count,
+       COALESCE(SUM(price_cents) FILTER (WHERE status <> 'cancelled'), 0)::int AS revenue_cents
+     FROM public.appointments
+     WHERE establishment_id = $1
+       AND appointment_date BETWEEN $2::date AND $3::date
+     GROUP BY appointment_date
+     ORDER BY appointment_date ASC`,
+    [establishmentId, startDate, endDate]
   );
   return result.rows;
 }

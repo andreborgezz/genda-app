@@ -19,6 +19,21 @@ export async function getScheduleBlocksByDate(
   return result.rows;
 }
 
+export async function getScheduleBlocksInRange(
+  establishmentId: string,
+  startDate: string,
+  endDate: string
+): Promise<ScheduleBlockRow[]> {
+  const result = await query<ScheduleBlockRow>(
+    `SELECT id, block_date::text, start_time::text, end_time::text, all_day, reason
+     FROM public.schedule_blocks
+     WHERE establishment_id = $1 AND block_date BETWEEN $2::date AND $3::date
+     ORDER BY block_date ASC, start_time ASC`,
+    [establishmentId, startDate, endDate]
+  );
+  return result.rows;
+}
+
 export async function getUpcomingScheduleBlocks(
   establishmentId: string
 ): Promise<ScheduleBlockRow[]> {

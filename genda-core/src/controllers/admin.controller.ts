@@ -4,6 +4,7 @@ import { isR2Configured, uploadImageToR2 } from '../config/r2';
 import { timeToMinutes } from '../utils/time';
 import {
   getAppointmentsByEstablishment,
+  getMonthlyAppointmentSummary,
   updateAppointmentStatusById,
 } from '../models/appointment.model';
 import {
@@ -14,6 +15,7 @@ import {
 import {
   createScheduleBlock,
   deleteScheduleBlockById,
+  getScheduleBlocksInRange,
   getUpcomingScheduleBlocks,
 } from '../models/scheduleBlock.model';
 import {
@@ -299,8 +301,83 @@ export async function getAdminAppointments(req: Request, res: Response, next: Ne
       return;
     }
     const date = typeof req.query.date === 'string' && req.query.date ? req.query.date : null;
-    const appointments = await getAppointmentsByEstablishment(estId, date);
+    const startDate =
+      typeof req.query.startDate === 'string' && req.query.startDate ? req.query.startDate : null;
+    const endDate =
+      typeof req.query.endDate === 'string' && req.query.endDate ? req.query.endDate : null;
+    const appointments = await getAppointmentsByEstablishment(estId, date, startDate, endDate);
     res.json({ appointments });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getAdminMonthSummary(req: Request, res: Response, next: NextFunction) {
+  try {
+    const estId = await resolveEstablishmentId(req.query.slug);
+    if (!estId) {
+      res.status(404).json({ error: 'Estabelecimento não encontrado.' });
+      return;
+    }
+    const monthParam = String(req.query.month || '');
+    if (!/^\d{4}-\d{2}$/.test(monthParam)) {
+      res.status(400).json({ error: 'Parâmetro month (YYYY-MM) é obrigatório.' });
+      return;
+    }
+    const [year, month] = monthParam.split('-').map(Number);
+    const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    const startDate = `${monthParam}-01`;
+    const endDate = `${monthParam}-${String(lastDay).padStart(2, '0')}`;
+
+    const [summaries, blocks] = await Promise.all([
+      getMonthlyAppointmentSummary(estId, startDate, endDate),
+      getScheduleBlocksInRange(estId, startDate, endDate),
+    ]);
+
+    const days: Record<
+      string,
+      {
+        total_count: number;
+        confirmed_count: number;
+        completed_count: number;
+        revenue_cents: number;
+        has_block: boolean;
+        block_all_day: boolean;
+        block_reason: string;
+      }
+    > = {};
+
+    for (const s of summaries) {
+      days[s.appointment_date] = {
+        total_count: s.total_count,
+        confirmed_count: s.confirmed_count,
+        completed_count: s.completed_count,
+        revenue_cents: s.revenue_cents,
+        has_block: false,
+        block_all_day: false,
+        block_reason: '',
+      };
+    }
+
+    for (const b of blocks) {
+      const existing = days[b.block_date] || {
+        total_count: 0,
+        confirmed_count: 0,
+        completed_count: 0,
+        revenue_cents: 0,
+        has_block: false,
+        block_all_day: false,
+        block_reason: '',
+      };
+      days[b.block_date] = {
+        ...existing,
+        has_block: true,
+        block_all_day: existing.block_all_day || b.all_day,
+        block_reason: existing.block_reason || b.reason || 'Bloqueado',
+      };
+    }
+
+    res.json({ month: monthParam, days });
   } catch (err) {
     next(err);
   }
