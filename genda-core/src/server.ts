@@ -4,6 +4,7 @@ import { pool } from './config/db';
 import { env } from './config/env';
 import { isR2Configured } from './config/r2';
 import { adminRouter } from './routes/admin.routes';
+import { authRouter } from './routes/auth.routes';
 import { publicRouter } from './routes/public.routes';
 
 const app = express();
@@ -34,6 +35,7 @@ app.get('/health', async (_req, res) => {
   }
 });
 
+app.use('/api/auth', authRouter);
 app.use('/api/public', publicRouter);
 app.use('/api/admin', adminRouter);
 

@@ -247,8 +247,8 @@ export function AdminHoursPage() {
                     {b.block_date.split('-').reverse().join('/')}
                   </span>{' '}
                   <span className="text-[#5A6B82]">
-                    • {b.all_day ? 'Dia inteiro' : `${b.start_time?.slice(0, 5)} às ${b.end_time?.slice(0, 5)}`}
-                    {b.reason ? ` — ${b.reason}` : ''}
+                    • {b.all_day ? 'Dia todo' : `${b.start_time?.slice(0, 5)} às ${b.end_time?.slice(0, 5)}`}
+                    {b.reason ? ` - ${b.reason}` : ''}
                   </span>
                 </div>
                 <button

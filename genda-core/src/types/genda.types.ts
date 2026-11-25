@@ -73,3 +73,23 @@ export interface SlotOption {
   time: string;
   available: boolean;
 }
+
+export interface UserRow {
+  id: string;
+  establishment_id: string;
+  name: string;
+  email: string;
+  password_hash: string;
+  plan_name: string;
+  plan_status: string;
+  created_at?: string;
+}
+
+export interface AuthTokenPayload {
+  sub: string;
+  establishmentId: string;
+  email: string;
+  name: string;
+  iat: number;
+  exp: number;
+}

@@ -17,8 +17,11 @@ import {
   updateAdminWorkingHours,
   uploadAdminImage,
 } from '../controllers/admin.controller';
+import { requireAuth } from '../middlewares/auth.middleware';
 
 export const adminRouter = Router();
+
+adminRouter.use(requireAuth);
 
 const upload = multer({
   storage: multer.memoryStorage(),

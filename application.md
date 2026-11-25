@@ -18,7 +18,8 @@ O **Genda** é um sistema de agendamento online voltado para profissionais e est
 genda-app/ (raiz do repositório)
 ├── database/               # Scripts SQL puros para o Supabase (PostgreSQL)
 │   ├── 001_schema.sql      # Tabelas, índices e constraints
-│   └── 002_seed.sql        # Dados iniciais de demonstração (studio-aura)
+│   ├── 002_seed.sql        # Dados iniciais de demonstração (studio-aura)
+│   └── 003_auth_users.sql  # Tabela users para autenticação do painel administrativo
 ├── genda-core/             # Backend Node.js + Express + TypeScript + pg puro (sem ORM)
 │   ├── Dockerfile
 │   ├── docker-compose.yml  # Container único do backend (sem banco/storage local)
@@ -97,12 +98,15 @@ O arquivo `genda-core/docker-compose.yml` sobe **apenas o serviço `genda-core`*
   - `GET /api/public/establishments/:slug` — Retorna dados do estabelecimento, serviços ativos e horários de funcionamento.
   - `GET /api/public/establishments/:slug/slots?date=YYYY-MM-DD&serviceId=<uuid>` — Calcula os horários livres e ocupados considerando `working_hours`, `break_start/end`, `schedule_blocks`, `appointments` ativos e a duração do serviço.
   - `POST /api/public/establishments/:slug/appointments` — Cria o agendamento usando transação PostgreSQL + `pg_advisory_xact_lock(hashtext(establishmentId:date))` para impedir conflitos simultâneos no mesmo horário.
-- **Painel (`/api/admin`):**
+- **Autenticação (`/api/auth`):**
+  - `POST /api/auth/login` — Valida e-mail/senha (`scrypt` + `timingSafeEqual`) e emite JWT HS256 (30 dias se `rememberMe`, 24h caso contrário).
+  - `GET /api/auth/me` — Retorna usuário autenticado e estabelecimento vinculado.
+- **Painel (`/api/admin` — protegido por `Bearer` JWT via `requireAuth`):**
   - `GET /api/admin/establishment` | `PUT /api/admin/establishment`
   - `GET /api/admin/services` | `POST /api/admin/services` | `PUT /api/admin/services/:id` | `DELETE /api/admin/services/:id`
   - `GET /api/admin/working-hours` | `PUT /api/admin/working-hours`
   - `GET /api/admin/blocks` | `POST /api/admin/blocks` | `DELETE /api/admin/blocks/:id`
-  - `GET /api/admin/appointments?date=YYYY-MM-DD` | `PATCH /api/admin/appointments/:id/status`
+  - `GET /api/admin/appointments?date=YYYY-MM-DD` | `GET /api/admin/appointments/month-summary?month=YYYY-MM` | `PATCH /api/admin/appointments/:id/status`
   - `POST /api/admin/upload`
 
 ---

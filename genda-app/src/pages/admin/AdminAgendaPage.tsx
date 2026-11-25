@@ -522,7 +522,7 @@ export function AdminAgendaPage() {
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-base font-bold text-[#1E3A8A]">
-            Linha do Tempo — {selectedDate.split('-').reverse().join('/')}
+            Linha do Tempo - {selectedDate.split('-').reverse().join('/')}
           </h2>
           {selectedDayMeta?.has_block && (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold">

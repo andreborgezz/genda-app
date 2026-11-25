@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
 import { isR2Configured, uploadImageToR2 } from '../config/r2';
+import type { AuthenticatedRequest } from '../middlewares/auth.middleware';
 import { timeToMinutes } from '../utils/time';
 import {
   getAppointmentsByEstablishment,
@@ -81,9 +82,14 @@ const statusSchema = z.object({
   status: z.enum(['confirmed', 'completed', 'cancelled', 'no_show']),
 });
 
+async function getScopedEstablishmentId(req: AuthenticatedRequest): Promise<string | null> {
+  if (req.auth?.establishmentId) return req.auth.establishmentId;
+  return resolveEstablishmentId(req.query.slug);
+}
+
 export async function getAdminEstablishment(req: Request, res: Response, next: NextFunction) {
   try {
-    const estId = await resolveEstablishmentId(req.query.slug);
+    const estId = await getScopedEstablishmentId(req as AuthenticatedRequest);
     if (!estId) {
       res.status(404).json({ error: 'Estabelecimento não encontrado.' });
       return;
@@ -97,7 +103,7 @@ export async function getAdminEstablishment(req: Request, res: Response, next: N
 
 export async function updateAdminEstablishment(req: Request, res: Response, next: NextFunction) {
   try {
-    const estId = await resolveEstablishmentId(req.query.slug);
+    const estId = await getScopedEstablishmentId(req as AuthenticatedRequest);
     if (!estId) {
       res.status(404).json({ error: 'Estabelecimento não encontrado.' });
       return;
@@ -116,7 +122,7 @@ export async function updateAdminEstablishment(req: Request, res: Response, next
 
 export async function getAdminServices(req: Request, res: Response, next: NextFunction) {
   try {
-    const estId = await resolveEstablishmentId(req.query.slug);
+    const estId = await getScopedEstablishmentId(req as AuthenticatedRequest);
     if (!estId) {
       res.status(404).json({ error: 'Estabelecimento não encontrado.' });
       return;
@@ -130,7 +136,7 @@ export async function getAdminServices(req: Request, res: Response, next: NextFu
 
 export async function createAdminService(req: Request, res: Response, next: NextFunction) {
   try {
-    const estId = await resolveEstablishmentId(req.query.slug);
+    const estId = await getScopedEstablishmentId(req as AuthenticatedRequest);
     if (!estId) {
       res.status(404).json({ error: 'Estabelecimento não encontrado.' });
       return;
@@ -180,7 +186,7 @@ export async function deleteAdminService(req: Request, res: Response, next: Next
 
 export async function getAdminWorkingHours(req: Request, res: Response, next: NextFunction) {
   try {
-    const estId = await resolveEstablishmentId(req.query.slug);
+    const estId = await getScopedEstablishmentId(req as AuthenticatedRequest);
     if (!estId) {
       res.status(404).json({ error: 'Estabelecimento não encontrado.' });
       return;
@@ -194,7 +200,7 @@ export async function getAdminWorkingHours(req: Request, res: Response, next: Ne
 
 export async function updateAdminWorkingHours(req: Request, res: Response, next: NextFunction) {
   try {
-    const estId = await resolveEstablishmentId(req.query.slug);
+    const estId = await getScopedEstablishmentId(req as AuthenticatedRequest);
     if (!estId) {
       res.status(404).json({ error: 'Estabelecimento não encontrado.' });
       return;
@@ -243,7 +249,7 @@ export async function updateAdminWorkingHours(req: Request, res: Response, next:
 
 export async function getAdminBlocks(req: Request, res: Response, next: NextFunction) {
   try {
-    const estId = await resolveEstablishmentId(req.query.slug);
+    const estId = await getScopedEstablishmentId(req as AuthenticatedRequest);
     if (!estId) {
       res.status(404).json({ error: 'Estabelecimento não encontrado.' });
       return;
@@ -257,7 +263,7 @@ export async function getAdminBlocks(req: Request, res: Response, next: NextFunc
 
 export async function createAdminBlock(req: Request, res: Response, next: NextFunction) {
   try {
-    const estId = await resolveEstablishmentId(req.query.slug);
+    const estId = await getScopedEstablishmentId(req as AuthenticatedRequest);
     if (!estId) {
       res.status(404).json({ error: 'Estabelecimento não encontrado.' });
       return;
@@ -295,7 +301,7 @@ export async function deleteAdminBlock(req: Request, res: Response, next: NextFu
 
 export async function getAdminAppointments(req: Request, res: Response, next: NextFunction) {
   try {
-    const estId = await resolveEstablishmentId(req.query.slug);
+    const estId = await getScopedEstablishmentId(req as AuthenticatedRequest);
     if (!estId) {
       res.status(404).json({ error: 'Estabelecimento não encontrado.' });
       return;
@@ -314,7 +320,7 @@ export async function getAdminAppointments(req: Request, res: Response, next: Ne
 
 export async function getAdminMonthSummary(req: Request, res: Response, next: NextFunction) {
   try {
-    const estId = await resolveEstablishmentId(req.query.slug);
+    const estId = await getScopedEstablishmentId(req as AuthenticatedRequest);
     if (!estId) {
       res.status(404).json({ error: 'Estabelecimento não encontrado.' });
       return;

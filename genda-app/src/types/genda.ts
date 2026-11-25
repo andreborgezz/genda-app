@@ -78,3 +78,12 @@ export interface MonthDaySummary {
   block_all_day: boolean;
   block_reason: string;
 }
+
+export interface AuthUser {
+  id: string;
+  establishment_id: string;
+  name: string;
+  email: string;
+  plan_name: string;
+  plan_status: string;
+}

@@ -13,8 +13,8 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import gendaLogo from '../assets/genda-logo-horizontal-dots.svg';
-import { adminApi } from '../services/api';
-import type { Establishment } from '../types/genda';
+import { adminApi, clearAuthSession, getStoredUser } from '../services/api';
+import type { AuthUser, Establishment } from '../types/genda';
 
 const NAV_GROUPS = [
   {
@@ -56,6 +56,7 @@ const MOBILE_NAV_ITEMS = NAV_GROUPS.flatMap((g) => g.items);
 export function AdminLayout() {
   const navigate = useNavigate();
   const [establishment, setEstablishment] = useState<Establishment | null>(null);
+  const [user] = useState<AuthUser | null>(() => getStoredUser());
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -81,8 +82,8 @@ export function AdminLayout() {
 
   function handleLogout() {
     setMenuOpen(false);
-    localStorage.removeItem('genda_token');
-    navigate('/');
+    clearAuthSession();
+    navigate('/login', { replace: true });
   }
 
   return (
@@ -141,20 +142,20 @@ export function AdminLayout() {
                 <div className="flex items-center gap-2 text-xs text-[#5A6B82]">
                   <Mail className="w-3.5 h-3.5 text-[#1D4ED8] shrink-0" />
                   <span className="truncate font-medium text-[#1E3A8A]">
-                    contato@{establishment?.slug || 'studio'}.com
+                    {user?.email || `contato@${establishment?.slug || 'studio'}.com`}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#DBEAFE]">
                   <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#1E3A8A]">
                     <CreditCard className="w-3.5 h-3.5 text-[#1D4ED8]" />
-                    Plano Pro
+                    {user?.plan_name || 'Plano Pro'}
                   </span>
                   <span className="px-2 py-0.5 rounded-full bg-[#10B981]/15 text-[#047857] text-[10px] font-bold">
-                    Ativo
+                    {user?.plan_status || 'Ativo'}
                   </span>
                 </div>
                 <p className="text-[10px] text-[#5A6B82]">
-                  Assinatura mensal • Renova em 24/12/2026
+                  {user?.name ? `${user.name} • ` : ''}Assinatura mensal
                 </p>
               </div>
 
@@ -215,15 +216,25 @@ export function AdminLayout() {
       {/* Topbar Mobile */}
       <header className="lg:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#DBEAFE] px-4 h-14 flex items-center justify-between">
         <img src={gendaLogo} alt="Genda" className="h-6" />
-        <Link
-          to={publicPath}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1D4ED8] bg-[#F4F8FF] px-3 py-1.5 rounded-full border border-[#DBEAFE]"
-        >
-          <ExternalLink className="w-3.5 h-3.5" />
-          Ver página
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            to={publicPath}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1D4ED8] bg-[#F4F8FF] px-3 py-1.5 rounded-full border border-[#DBEAFE]"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            Ver página
+          </Link>
+          <button
+            type="button"
+            onClick={handleLogout}
+            title="Sair da conta"
+            className="w-8 h-8 rounded-full border border-[#DBEAFE] bg-white text-red-600 hover:bg-red-50 flex items-center justify-center cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </header>
 
       {/* Conteúdo */}
