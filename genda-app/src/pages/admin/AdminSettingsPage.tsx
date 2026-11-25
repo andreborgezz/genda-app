@@ -92,15 +92,6 @@ export function AdminSettingsPage() {
             <Palette className="w-5 h-5 text-[#1D4ED8]" />
             <h2 className="text-base font-bold text-[#1E3A8A]">Identidade Visual & Imagens</h2>
           </div>
-          <span
-            className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
-              r2Configured
-                ? 'bg-[#10B981]/15 text-[#047857]'
-                : 'bg-amber-100 text-amber-800'
-            }`}
-          >
-            {r2Configured ? 'Cloudflare R2 conectado' : 'R2 aguardando chaves'}
-          </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

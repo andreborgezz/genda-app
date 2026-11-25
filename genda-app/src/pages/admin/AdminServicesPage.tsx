@@ -379,7 +379,7 @@ export function AdminServicesPage() {
 
             <div>
               <label className="block text-xs font-semibold text-[#5A6B82] mb-1">
-                Foto do Serviço (Cloudflare R2 ou URL)
+                Foto do Serviço
               </label>
               <div className="flex gap-2">
                 <input
