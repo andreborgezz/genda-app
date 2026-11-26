@@ -1,9 +1,18 @@
+import crypto from 'crypto';
 import { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
+import { env } from '../config/env';
 import type { AuthenticatedRequest } from '../middlewares/auth.middleware';
 import { getEstablishmentById } from '../models/establishment.model';
-import { getUserByEmail, getUserById } from '../models/user.model';
-import { signAuthToken, verifyPassword } from '../utils/auth';
+import {
+  createPasswordResetToken,
+  deleteExpiredTokensForUser,
+  findValidToken,
+  markTokenAsUsed,
+} from '../models/passwordResetToken.model';
+import { getUserByEmail, getUserById, updateUserPasswordHash } from '../models/user.model';
+import { sendPasswordResetEmail } from '../services/email.service';
+import { hashPassword, signAuthToken, verifyPassword } from '../utils/auth';
 
 const loginSchema = z.object({
   email: z.string().trim().email('Informe um e-mail válido'),
@@ -78,6 +87,82 @@ export async function getMeController(
     }
 
     res.json({ user, establishment });
+  } catch (err) {
+    next(err);
+  }
+}
+
+const requestPasswordResetSchema = z.object({
+  email: z.string().trim().email('Informe um e-mail válido'),
+});
+
+const confirmPasswordResetSchema = z.object({
+  token: z.string().trim().min(1, 'Token obrigatório'),
+  password: z.string().min(8, 'A senha deve ter no mínimo 8 caracteres'),
+});
+
+const NEUTRAL_RESET_MESSAGE =
+  'Se esse e-mail estiver cadastrado, você receberá um link em instantes.';
+
+export async function requestPasswordResetController(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const parsed = requestPasswordResetSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
+      return;
+    }
+
+    const user = await getUserByEmail(parsed.data.email);
+    if (!user) {
+      res.json({ message: NEUTRAL_RESET_MESSAGE });
+      return;
+    }
+
+    await deleteExpiredTokensForUser(user.id);
+
+    const tokenRaw = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(tokenRaw).digest('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+    await createPasswordResetToken(user.id, tokenHash, expiresAt);
+
+    const resetUrl = `${env.appUrl}/redefinir-senha?token=${tokenRaw}`;
+    await sendPasswordResetEmail(user.email, resetUrl);
+
+    res.json({ message: NEUTRAL_RESET_MESSAGE });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function confirmPasswordResetController(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const parsed = confirmPasswordResetSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
+      return;
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(parsed.data.token).digest('hex');
+    const tokenRecord = await findValidToken(tokenHash);
+    if (!tokenRecord) {
+      res.status(400).json({ error: 'Token inválido ou expirado.' });
+      return;
+    }
+
+    const passwordHash = hashPassword(parsed.data.password);
+    await updateUserPasswordHash(tokenRecord.user_id, passwordHash);
+    await markTokenAsUsed(tokenRecord.id);
+
+    res.json({ message: 'Senha redefinida com sucesso.' });
   } catch (err) {
     next(err);
   }

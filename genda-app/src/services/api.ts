@@ -84,6 +84,18 @@ export const authApi = {
       undefined,
       true
     ),
+
+  requestPasswordReset: (email: string) =>
+    request<{ message: string }>('/api/auth/request-password-reset', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+
+  confirmPasswordReset: (token: string, password: string) =>
+    request<{ message: string }>('/api/auth/confirm-password-reset', {
+      method: 'POST',
+      body: JSON.stringify({ token, password }),
+    }),
 };
 
 export const publicApi = {

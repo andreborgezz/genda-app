@@ -3,6 +3,7 @@ import { AdminLayout } from './components/AdminLayout';
 import { RequireAuth } from './components/RequireAuth';
 import { LoginPage } from './pages/LoginPage';
 import { PublicBookingPage } from './pages/PublicBookingPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { AdminAgendaPage } from './pages/admin/AdminAgendaPage';
 import { AdminHoursPage } from './pages/admin/AdminHoursPage';
 import { AdminServicesPage } from './pages/admin/AdminServicesPage';
@@ -17,6 +18,7 @@ export function App() {
 
         {/* Login do profissional */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
 
         {/* Painel do profissional/dono (protegido) */}
         <Route element={<RequireAuth />}>

@@ -20,3 +20,15 @@ export async function getUserById(id: string): Promise<Omit<UserRow, 'password_h
   );
   return result.rows[0] ?? null;
 }
+
+export async function updateUserPasswordHash(
+  userId: string,
+  passwordHash: string
+): Promise<void> {
+  await query(
+    `UPDATE public.users
+     SET password_hash = $2, updated_at = now()
+     WHERE id = $1`,
+    [userId, passwordHash]
+  );
+}

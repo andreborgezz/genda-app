@@ -28,7 +28,11 @@ export function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [forgotNotice, setForgotNotice] = useState(false);
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState<string | null>(null);
+  const [forgotSuccess, setForgotSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (getAuthToken()) {
@@ -39,7 +43,6 @@ export function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setForgotNotice(false);
     setLoading(true);
     try {
       const res = await authApi.login({ email, password, rememberMe });
@@ -50,6 +53,38 @@ export function LoginPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleForgotSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setForgotError(null);
+    setForgotSuccess(null);
+    setForgotLoading(true);
+    try {
+      const res = await authApi.requestPasswordReset(forgotEmail);
+      setForgotSuccess(
+        res.message || 'Se esse e-mail estiver cadastrado, você receberá um link em instantes.'
+      );
+    } catch (err) {
+      setForgotError(
+        err instanceof Error ? err.message : 'Não foi possível enviar o link de redefinição.'
+      );
+    } finally {
+      setForgotLoading(false);
+    }
+  }
+
+  function openForgotMode() {
+    setForgotEmail(email);
+    setForgotError(null);
+    setForgotSuccess(null);
+    setForgotMode(true);
+  }
+
+  function closeForgotMode() {
+    setForgotMode(false);
+    setForgotError(null);
+    setForgotSuccess(null);
   }
 
   return (
@@ -121,110 +156,173 @@ export function LoginPage() {
         {/* Card / Conteúdo do Formulário */}
         <div className="-mt-6 lg:mt-0 w-full max-w-md mx-auto">
           <div className="bg-white rounded-3xl lg:rounded-none shadow-lg lg:shadow-none border border-[#DBEAFE] lg:border-0 p-6 sm:p-8 lg:p-0 space-y-6">
-            <div>
-              <h2 className="text-2xl sm:text-[26px] font-bold text-[#0A1C30] tracking-tight">
-                Bem-vindo de volta! <span aria-hidden="true">👋</span>
-              </h2>
-              <p className="text-xs sm:text-sm text-[#5A6B82] mt-1.5 leading-relaxed">
-                Acesse sua agenda inteligente e simplifique a gestão do seu estúdio hoje.
-              </p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="login-email"
-                  className="block text-[11px] font-bold uppercase tracking-wider text-[#5A6B82] mb-1.5"
-                >
-                  Seu e-mail profissional
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-[#5A6B82] absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    id="login-email"
-                    type="email"
-                    required
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="exemplo@seuestudio.com.br"
-                    className="w-full h-12 pl-10 pr-4 rounded-xl border border-[#DBEAFE] bg-[#F4F8FF] focus:bg-white focus:border-[#1D4ED8] focus:outline-none text-sm text-[#1E3A8A] placeholder:text-[#5A6B82]/70 transition-colors"
-                  />
+            {forgotMode ? (
+              <>
+                <div>
+                  <h2 className="text-2xl sm:text-[26px] font-bold text-[#0A1C30] tracking-tight">
+                    Redefinir senha
+                  </h2>
+                  <p className="text-xs sm:text-sm text-[#5A6B82] mt-1.5 leading-relaxed">
+                    Informe seu e-mail profissional para receber o link de redefinição de senha.
+                  </p>
                 </div>
-              </div>
 
-              <div>
-                <label
-                  htmlFor="login-password"
-                  className="block text-[11px] font-bold uppercase tracking-wider text-[#5A6B82] mb-1.5"
-                >
-                  Sua senha
-                </label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-[#5A6B82] absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    id="login-password"
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    className="w-full h-12 pl-10 pr-11 rounded-xl border border-[#DBEAFE] bg-[#F4F8FF] focus:bg-white focus:border-[#1D4ED8] focus:outline-none text-sm text-[#1E3A8A] placeholder:text-[#5A6B82]/70 transition-colors"
-                  />
+                <form onSubmit={handleForgotSubmit} className="space-y-4">
+                  <div>
+                    <label
+                      htmlFor="forgot-email"
+                      className="block text-[11px] font-bold uppercase tracking-wider text-[#5A6B82] mb-1.5"
+                    >
+                      Seu e-mail profissional
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-[#5A6B82] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        id="forgot-email"
+                        type="email"
+                        required
+                        autoComplete="email"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        placeholder="exemplo@seuestudio.com.br"
+                        className="w-full h-12 pl-10 pr-4 rounded-xl border border-[#DBEAFE] bg-[#F4F8FF] focus:bg-white focus:border-[#1D4ED8] focus:outline-none text-sm text-[#1E3A8A] placeholder:text-[#5A6B82]/70 transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  {forgotError && (
+                    <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs font-semibold text-red-700">
+                      {forgotError}
+                    </div>
+                  )}
+
+                  {forgotSuccess && (
+                    <div className="p-3 rounded-xl bg-[#10B981]/10 border border-[#10B981]/30 text-xs font-semibold text-[#047857]">
+                      {forgotSuccess}
+                    </div>
+                  )}
+
                   <button
-                    type="button"
-                    onClick={() => setShowPassword((s) => !s)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#5A6B82] hover:text-[#1E3A8A] cursor-pointer"
-                    aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                    type="submit"
+                    disabled={forgotLoading}
+                    className="w-full h-12 rounded-xl bg-[#1D4ED8] hover:bg-[#1E40AF] disabled:bg-[#93C5FD] text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {forgotLoading ? 'Enviando...' : 'Enviar link'}
+                    {!forgotLoading && <ArrowRight className="w-4 h-4" />}
                   </button>
+
+                  <div className="text-center pt-1">
+                    <button
+                      type="button"
+                      onClick={closeForgotMode}
+                      className="text-xs font-semibold text-[#1D4ED8] hover:text-[#1E3A8A] cursor-pointer"
+                    >
+                      Voltar ao login
+                    </button>
+                  </div>
+                </form>
+              </>
+            ) : (
+              <>
+                <div>
+                  <h2 className="text-2xl sm:text-[26px] font-bold text-[#0A1C30] tracking-tight">
+                    Bem-vindo de volta! <span aria-hidden="true">👋</span>
+                  </h2>
+                  <p className="text-xs sm:text-sm text-[#5A6B82] mt-1.5 leading-relaxed">
+                    Acesse sua agenda inteligente e simplifique a gestão do seu estúdio hoje.
+                  </p>
                 </div>
-              </div>
 
-              <div className="flex items-center justify-between gap-2 pt-0.5">
-                <label className="inline-flex items-center gap-2 text-xs font-medium text-[#5A6B82] cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded accent-[#1D4ED8]"
-                  />
-                  Lembrar de mim por 30 dias
-                </label>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label
+                      htmlFor="login-email"
+                      className="block text-[11px] font-bold uppercase tracking-wider text-[#5A6B82] mb-1.5"
+                    >
+                      Seu e-mail profissional
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-[#5A6B82] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        id="login-email"
+                        type="email"
+                        required
+                        autoComplete="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="exemplo@seuestudio.com.br"
+                        className="w-full h-12 pl-10 pr-4 rounded-xl border border-[#DBEAFE] bg-[#F4F8FF] focus:bg-white focus:border-[#1D4ED8] focus:outline-none text-sm text-[#1E3A8A] placeholder:text-[#5A6B82]/70 transition-colors"
+                      />
+                    </div>
+                  </div>
 
-                <button
-                  type="button"
-                  onClick={() => setForgotNotice((v) => !v)}
-                  className="text-xs font-semibold text-[#1D4ED8] hover:text-[#1E3A8A] cursor-pointer"
-                >
-                  Esqueceu a senha?
-                </button>
-              </div>
+                  <div>
+                    <label
+                      htmlFor="login-password"
+                      className="block text-[11px] font-bold uppercase tracking-wider text-[#5A6B82] mb-1.5"
+                    >
+                      Sua senha
+                    </label>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 text-[#5A6B82] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        id="login-password"
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••••••"
+                        className="w-full h-12 pl-10 pr-11 rounded-xl border border-[#DBEAFE] bg-[#F4F8FF] focus:bg-white focus:border-[#1D4ED8] focus:outline-none text-sm text-[#1E3A8A] placeholder:text-[#5A6B82]/70 transition-colors"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((s) => !s)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#5A6B82] hover:text-[#1E3A8A] cursor-pointer"
+                        aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
 
-              {forgotNotice && (
-                <div className="p-3 rounded-xl bg-[#F4F8FF] border border-[#DBEAFE] text-xs text-[#1E3A8A]">
-                  A redefinição de senha via token por e-mail será ativada em breve. Se precisar
-                  agora, solicite ao administrador.
-                </div>
-              )}
+                  <div className="flex items-center justify-between gap-2 pt-0.5">
+                    <label className="inline-flex items-center gap-2 text-xs font-medium text-[#5A6B82] cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="w-4 h-4 rounded accent-[#1D4ED8]"
+                      />
+                      Lembrar de mim por 30 dias
+                    </label>
 
-              {error && (
-                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs font-semibold text-red-700">
-                  {error}
-                </div>
-              )}
+                    <button
+                      type="button"
+                      onClick={openForgotMode}
+                      className="text-xs font-semibold text-[#1D4ED8] hover:text-[#1E3A8A] cursor-pointer"
+                    >
+                      Esqueceu a senha?
+                    </button>
+                  </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full h-12 rounded-xl bg-[#1D4ED8] hover:bg-[#1E40AF] disabled:bg-[#93C5FD] text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
-              >
-                {loading ? 'Entrando...' : 'Entrar na minha Conta'}
-                {!loading && <ArrowRight className="w-4 h-4" />}
-              </button>
-            </form>
+                  {error && (
+                    <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs font-semibold text-red-700">
+                      {error}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-12 rounded-xl bg-[#1D4ED8] hover:bg-[#1E40AF] disabled:bg-[#93C5FD] text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
+                  >
+                    {loading ? 'Entrando...' : 'Entrar na minha Conta'}
+                    {!loading && <ArrowRight className="w-4 h-4" />}
+                  </button>
+                </form>
+              </>
+            )}
           </div>
 
           {/* Box informativo de acesso restrito */}
