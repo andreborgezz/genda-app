@@ -10,7 +10,12 @@ import {
   findValidToken,
   markTokenAsUsed,
 } from '../models/passwordResetToken.model';
-import { getUserByEmail, getUserById, updateUserPasswordHash } from '../models/user.model';
+import {
+  getUserByEmail,
+  getUserById,
+  getUserPasswordHashById,
+  updateUserPasswordHash,
+} from '../models/user.model';
 import { sendPasswordResetEmail } from '../services/email.service';
 import { hashPassword, signAuthToken, verifyPassword } from '../utils/auth';
 
@@ -155,6 +160,12 @@ export async function confirmPasswordResetController(
     const tokenRecord = await findValidToken(tokenHash);
     if (!tokenRecord) {
       res.status(400).json({ error: 'Token inválido ou expirado.' });
+      return;
+    }
+
+    const currentPasswordHash = await getUserPasswordHashById(tokenRecord.user_id);
+    if (currentPasswordHash && verifyPassword(parsed.data.password, currentPasswordHash)) {
+      res.status(400).json({ error: 'A nova senha não pode ser igual à senha anterior.' });
       return;
     }
 

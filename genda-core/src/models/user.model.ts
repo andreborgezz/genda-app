@@ -21,6 +21,16 @@ export async function getUserById(id: string): Promise<Omit<UserRow, 'password_h
   return result.rows[0] ?? null;
 }
 
+export async function getUserPasswordHashById(id: string): Promise<string | null> {
+  const result = await query<{ password_hash: string }>(
+    `SELECT password_hash
+     FROM public.users
+     WHERE id = $1`,
+    [id]
+  );
+  return result.rows[0]?.password_hash ?? null;
+}
+
 export async function updateUserPasswordHash(
   userId: string,
   passwordHash: string
